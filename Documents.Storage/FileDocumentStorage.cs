@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Documents;
+using Documents.Caching;
 using Newtonsoft.Json;
 
 namespace Documents.Storage
@@ -8,6 +9,21 @@ namespace Documents.Storage
     public class FileDocumentStorage : IDocumentStorage
     {
         private const string DocumentsFolderPath = "./documents/";
+
+        private readonly ICache cache;
+
+        private readonly Dictionary<string, TimeSpan> cacheTimes = new()
+        {
+            { nameof(Book), TimeSpan.FromHours(1) },
+            { nameof(LocalizedBook), TimeSpan.FromHours(2) },
+            { nameof(Patent), TimeSpan.Zero }, // Do not cache.
+            { nameof(Magazine), TimeSpan.MaxValue } // Cache indefinitely.
+        };
+
+        public FileDocumentStorage(ICache cache)
+        {
+            this.cache = cache;
+        }
 
         public List<Document> GetByNumber(string documentNumber)
         {
@@ -42,7 +58,12 @@ namespace Documents.Storage
 
                 if (doc != null)
                 {
-                    documents.Add(doc);
+                    TimeSpan documentTypeCacheTime;
+                    if (cacheTimes.TryGetValue(doc.GetType().Name, out documentTypeCacheTime))
+                    {
+                        DateTime expirationTime = DateTime.Now + documentTypeCacheTime;
+                        cache.Add(filePath, doc, expirationTime);
+                    }
                 }
             }
             return documents;
