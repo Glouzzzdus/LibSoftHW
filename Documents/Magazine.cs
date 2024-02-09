@@ -1,21 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Documents
+﻿
+namespace Documents;
+public class Magazine : Document
 {
-    public class Magazine : Document
-    {
-        public string Title { get; set; }
-        public string Publisher { get; set; }
-        public string ReleaseNumber { get; set; }
-        public DateTime PublishDate { get; set; }
+    public string Publisher { get; set; }
+    public int ReleaseNumber { get; set; }
 
-        public override string GetCardInfo()
-        {
-            return "Magazine";
-        }
+    public override string GetCardInfo()
+    {
+        return $"Magazine: {Title}, Publisher: {Publisher}, Release number: {ReleaseNumber}, Publication Date: {DatePublished}";
     }
 }

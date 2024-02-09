@@ -18,10 +18,33 @@ namespace Documents.Storage
             foreach (string filePath in filePaths)
             {
                 string jsonData = File.ReadAllText(filePath);
-                Document doc = JsonConvert.DeserializeObject<Document>(jsonData);
-                documents.Add(doc);
-            }
+                dynamic docData = JsonConvert.DeserializeObject<dynamic>(jsonData);
+                Document doc;
 
+                switch ((string)docData.type)
+                {
+                    case nameof(Book):
+                        doc = JsonConvert.DeserializeObject<Book>(jsonData);
+                        break;
+                    case nameof(LocalizedBook):
+                        doc = JsonConvert.DeserializeObject<LocalizedBook>(jsonData);
+                        break;
+                    case nameof(Patent):
+                        doc = JsonConvert.DeserializeObject<Patent>(jsonData);
+                        break;
+                    case nameof(Magazine):
+                        doc = JsonConvert.DeserializeObject<Magazine>(jsonData);
+                        break;                    
+                    default:
+                        doc = null;
+                        break;
+                }
+
+                if (doc != null)
+                {
+                    documents.Add(doc);
+                }
+            }
             return documents;
         }
     }
