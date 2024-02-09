@@ -10,7 +10,19 @@ namespace Documents.Storage
     {
         private const string DocumentsFolderPath = "./documents/";
 
-        private readonly ICache cache;
+        private readonly ICache _cache;
+        private readonly string _rootPath;
+        private readonly IFileReader _fileReader;
+        private readonly IDirectoryHelper _directoryHelper;
+
+        public FileDocumentStorage(ICache cache, string rootPath, IFileReader fileReader, IDirectoryHelper directoryHelper)
+        {
+            _cache = cache;
+            _rootPath = rootPath;
+            _fileReader = fileReader;
+            _directoryHelper = directoryHelper;
+        }
+
 
         private readonly Dictionary<string, TimeSpan> cacheTimes = new()
         {
@@ -22,18 +34,20 @@ namespace Documents.Storage
 
         public FileDocumentStorage(ICache cache)
         {
-            this.cache = cache;
+            this._cache = cache;
         }
 
         public List<Document> GetByNumber(string documentNumber)
         {
             List<Document> documents = new List<Document>();
 
-            string[] filePaths = Directory.GetFiles(DocumentsFolderPath, $"*_{documentNumber}.json");
+            // Use _directoryHelper instead of System.IO.Directory
+            string[] filePaths = _directoryHelper.GetFiles($"{DocumentsFolderPath}*_{documentNumber}.json");
 
             foreach (string filePath in filePaths)
             {
-                string jsonData = File.ReadAllText(filePath);
+                // Use _fileReader instead of System.IO.File
+                string jsonData = _fileReader.ReadAllText(filePath);
                 dynamic docData = JsonConvert.DeserializeObject<dynamic>(jsonData);
                 Document doc;
 
@@ -50,7 +64,7 @@ namespace Documents.Storage
                         break;
                     case nameof(Magazine):
                         doc = JsonConvert.DeserializeObject<Magazine>(jsonData);
-                        break;                    
+                        break;
                     default:
                         doc = null;
                         break;
@@ -62,7 +76,7 @@ namespace Documents.Storage
                     if (cacheTimes.TryGetValue(doc.GetType().Name, out documentTypeCacheTime))
                     {
                         DateTime expirationTime = DateTime.Now + documentTypeCacheTime;
-                        cache.Add(filePath, doc, expirationTime);
+                        _cache.Add(filePath, doc, expirationTime);
                     }
                 }
             }
